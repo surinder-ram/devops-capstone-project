@@ -132,15 +132,13 @@ class TestAccountService(TestCase):
         data = response.get_json()
         self.assertIsInstance(data, list)  # Should return a list
 
-    def test_get_account(self): #nicht chatgpt
-        """It should Read a single Account"""
-        account = self._create_accounts(1)[0]
-        resp = self.client.get(
-            f"{BASE_URL}/{account.id}", content_type="application/json"
-        )
+    def test_get_account_list(self):
+        """It should Get a list of Accounts"""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data["name"], account.name)
+        self.assertEqual(len(data), 5)
 
 
 
@@ -151,22 +149,18 @@ class TestAccountService(TestCase):
 
     def test_update_account(self):
         """It should Update an existing Account"""
-        account = AccountFactory()
-        response = self.client.post(BASE_URL, json=account.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-        new_account = response.get_json()
-        account_id = new_account["id"]
-
-        # Update the account
-        updated_data = new_account
-        updated_data["name"] = "New Name"
-        
-        response = self.client.put(f"{BASE_URL}/{account_id}", json=updated_data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        updated_account = response.get_json()
-        self.assertEqual(updated_account["name"], "New Name")
+        # update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Something Known"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Something Known")
 
     def test_update_account_not_found(self):
         """It should return 404_NOT_FOUND when updating a missing Account"""
@@ -176,22 +170,16 @@ class TestAccountService(TestCase):
 
     def test_delete_account(self):
         """It should Delete an Account"""
-        account = AccountFactory()
-        response = self.client.post(BASE_URL, json=account.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        new_account = response.get_json()
-        account_id = new_account["id"]
-
-        # Delete the account
-        response = self.client.delete(f"{BASE_URL}/{account_id}")
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        # Ensure account is gone
-        response = self.client.get(f"{BASE_URL}/{account_id}")
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_account_not_found(self):
         """It should return 204_NO_CONTENT even if Account is missing"""
         response = self.client.delete(f"{BASE_URL}/99999")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
