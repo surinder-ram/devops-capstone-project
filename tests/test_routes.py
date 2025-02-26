@@ -132,27 +132,22 @@ class TestAccountService(TestCase):
         data = response.get_json()
         self.assertIsInstance(data, list)  # Should return a list
 
-    def test_get_account(self):
+    def test_get_account(self): #nicht chatgpt
         """It should Read a single Account"""
-        account = AccountFactory()
-        response = self.client.post(BASE_URL, json=account.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        new_account = response.get_json()
-        account_id = new_account["id"]
-
-        # Read the account
-        response = self.client.get(f"{BASE_URL}/{account_id}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        data = response.get_json()
-        self.assertEqual(data["id"], account_id)
+        account = self._create_accounts(1)[0]
+        resp = self.client.get(
+            f"{BASE_URL}/{account.id}", content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
         self.assertEqual(data["name"], account.name)
 
-    def test_get_account_not_found(self):
-        """It should return 404_NOT_FOUND for a missing Account"""
-        response = self.client.get(f"{BASE_URL}/99999")  # Nicht vorhandene ID
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_get_account_not_found(self):#nicht chatgpt
+        """It should not Read an Account that is not found"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_account(self):
         """It should Update an existing Account"""
