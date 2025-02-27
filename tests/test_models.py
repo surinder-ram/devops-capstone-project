@@ -3,8 +3,9 @@ Test cases for Account Model
 
 """
 import logging
-import unittest
 import os
+import unittest
+
 from service import app
 from service.models import Account, DataValidationError, db
 from tests.factories import AccountFactory
@@ -151,7 +152,9 @@ class TestAccount(unittest.TestCase):
         self.assertEqual(serial_account["email"], account.email)
         self.assertEqual(serial_account["address"], account.address)
         self.assertEqual(serial_account["phone_number"], account.phone_number)
-        self.assertEqual(serial_account["date_joined"], str(account.date_joined))
+        self.assertEqual(
+            serial_account["date_joined"], str(account.date_joined)
+        )
 
     def test_deserialize_an_account(self):
         """It should Deserialize an account"""
